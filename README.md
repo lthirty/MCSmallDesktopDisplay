@@ -31,7 +31,23 @@
 
 **代码优化版本：VS code+PlatfromIO** https://github.com/SmallDesktopDisplay-team/SmallDesktopDisplay
 
-## 3. QQ交流群
+## 3. v1.4加气象预警 自定义改动记录（2026-04-09）
+
+本次在 `2.Firmware/源代码/v1.4加气象预警/v1.4加气象预警/SmallDesktopDisplay` 中做了以下定制：
+
+1. 开机等待WiFi连接画面 Logo 替换
+- 原“adrobot”图标已替换为 `5.Docs/图片素材/开机/布布头像.jpg`
+- 代码位置：`loading()`，资源头文件为 `img/boot_logo_bubu.h`
+
+2. 正常运行画面右下角区域替换
+- 原内温/内湿数字区域（屏幕右下角）替换为同一张布布头像
+- 资源头文件为 `img/indoor_bubu.h`
+
+3. 去闪屏优化
+- 由于 `IndoorTem()` 会在主循环中被周期调用，若每次都重绘 JPG 会出现约 1-2 秒闪动一次
+- 当前已改为“仅在整屏刷新时重绘头像”，日常刷新不重复解码绘制，避免闪屏
+
+## 4. QQ交流群
 
 请注明来意！
 

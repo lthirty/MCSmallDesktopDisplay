@@ -18,6 +18,11 @@
  *                    增加web页面设置是否使用DHT传感器。（使能DHT后才可使用）
  *            V1.4    增加web服务器，使用web网页进行设置。由于使用了web服务器，无法开启WiFi休眠。
  *                    注意，此版本中的DHT11传感器和太空人图片选择可以通过web网页设置来进行选择，无需通过使能标志来重新编译。
+ *            V1.4.1  2026.04.09
+ *                    1) 开机等待WiFi连接画面Logo改为布布头像。
+ *                    2) 正常运行画面右下角区域改为布布头像。
+ *                    3) 去掉运行画面右下角上方“内温”文字。
+ *                    4) 修复运行画面头像每1-2秒闪动的问题（仅在整屏刷新时重绘头像）。
  * 
  * 引 脚 分 配： SCK  GPIO14
  *             MOSI  GPIO13
@@ -29,7 +34,7 @@
  * 
  *    感谢群友 @你别失望  提醒发现WiFi保存后无法重置的问题，目前已解决。详情查看更改说明！
  * *****************************************************************/
-#define Version  "SDD V1.4"
+#define Version  "SDD V1.4.1-BUBU"
 /* *****************************************************************
  *  库文件、头文件
  * *****************************************************************/
@@ -90,6 +95,7 @@ DHT dht(DHTPIN,DHTTYPE);
  * *****************************************************************/
 #include "font/ZdyLwFont_20.h"
 #include "img/boot_logo_bubu.h"
+#include "img/indoor_bubu.h"
 #include "img/temperature.h"
 #include "img/humidity.h"
 
@@ -143,6 +149,7 @@ uint8_t Wifi_en = 1; //wifi状态标志位  1：打开    0：关闭
 uint8_t UpdateWeater_en = 0; //更新时间标志位
 int prevTime = 0;       //滚动显示更新标志位
 int DHT_img_flag = 0;   //DHT传感器使用标志位
+uint8_t indoorAvatarDirty = 1; //右下角头像重绘标志位，避免周期性闪烁
 
 
 //EEPROM参数存储地址位
@@ -340,44 +347,12 @@ void tempWin()
 //外接DHT11传感器，显示数据
 void IndoorTem()
 {
-  float t = dht.readTemperature();
-  float h = dht.readHumidity();
-  String s = "内温";
-   /***绘制相关文字***/
-  clk.setColorDepth(8);
-  clk.loadFont(ZdyLwFont_20);
-  
-  //位置
-  clk.createSprite(58, 30);
-  clk.fillSprite(bgColor);
-  clk.setTextDatum(CC_DATUM);
-  clk.setTextColor(TFT_WHITE, bgColor);
-  clk.drawString(s,29,16);
-  clk.pushSprite(172,150);
-  clk.deleteSprite();
-  
-  //温度
-  clk.createSprite(60, 24); 
-  clk.fillSprite(bgColor);
-  clk.setTextDatum(CC_DATUM);
-  clk.setTextColor(TFT_WHITE, bgColor); 
-  clk.drawFloat(t,1,20,13);
-//  clk.drawString(sk["temp"].as<String>()+"℃",28,13);
-  clk.drawString("℃",50,13);
-  clk.pushSprite(170,184);
-  clk.deleteSprite();
-  
-  //湿度
-  clk.createSprite(60, 24); 
-  clk.fillSprite(bgColor);
-  clk.setTextDatum(CC_DATUM);
-  clk.setTextColor(TFT_WHITE, bgColor); 
-//  clk.drawString(sk["SD"].as<String>(),28,13);
-  clk.drawFloat(h,1,20,13);
-  clk.drawString("%",50,13);
-  //clk.drawString("100%",28,13);
-  clk.pushSprite(170,214);
-  clk.deleteSprite();
+  if(!indoorAvatarDirty) return;
+
+  // 仅在需要时重绘，防止每2秒调用时出现闪屏
+  tft.fillRect(170, 184, 60, 54, bgColor);
+  TJpgDec.drawJpg(170, 184, indoor_bubu, sizeof(indoor_bubu));
+  indoorAvatarDirty = 0;
 }
 #endif
 
@@ -490,6 +465,7 @@ void Serial_set()
       //设置屏幕方向后重新刷屏并显示
         tft.setRotation(RoSet);
         tft.fillScreen(0x0000);
+        indoorAvatarDirty = 1;
         LCD_reflash(1);//屏幕刷新程序
         UpdateWeater_en = 1;
         TJpgDec.drawJpg(15,183,temperature, sizeof(temperature));  //温度图标
@@ -623,6 +599,7 @@ void handleconfig()
     {
       DHT_img_flag = web_dhten;
       tft.fillScreen(0x0000);
+      indoorAvatarDirty = 1;
       LCD_reflash(1);//屏幕刷新程序
       UpdateWeater_en = 1;
       TJpgDec.drawJpg(15,183,temperature, sizeof(temperature));  //温度图标
@@ -640,6 +617,7 @@ void handleconfig()
       LCD_Rotation = web_setro;
       tft.setRotation(LCD_Rotation);
       tft.fillScreen(0x0000);
+      indoorAvatarDirty = 1;
       LCD_reflash(1);//屏幕刷新程序
       UpdateWeater_en = 1;
       TJpgDec.drawJpg(15,183,temperature, sizeof(temperature));  //温度图标
@@ -976,6 +954,7 @@ void setup()
   tft.invertDisplay(1);//反转所有显示颜色：1反转，0正常
   tft.setRotation(LCD_Rotation);
   tft.fillScreen(0x0000);
+  indoorAvatarDirty = 1;
   tft.setTextColor(TFT_BLACK, bgColor);
 
   targetTime = millis() + 1000; 
@@ -1058,6 +1037,7 @@ void setup()
     getCityCode();  //获取城市代码
    
   tft.fillScreen(TFT_BLACK);//清屏
+  indoorAvatarDirty = 1;
   
   TJpgDec.drawJpg(15,183,temperature, sizeof(temperature));  //温度图标
   TJpgDec.drawJpg(15,213,humidity, sizeof(humidity));  //湿度图标
