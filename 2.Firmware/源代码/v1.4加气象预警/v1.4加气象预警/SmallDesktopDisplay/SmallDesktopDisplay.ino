@@ -89,7 +89,7 @@ DHT dht(DHTPIN,DHTTYPE);
  *  字库、图片库
  * *****************************************************************/
 #include "font/ZdyLwFont_20.h"
-#include "img/misaka.h"
+#include "img/boot_logo_bubu.h"
 #include "img/temperature.h"
 #include "img/humidity.h"
 
@@ -283,6 +283,9 @@ bool tft_output(int16_t x, int16_t y, uint16_t w, uint16_t h, uint16_t* bitmap)
 byte loadNum = 6;
 void loading(byte delayTime)//绘制进度条
 {
+  // 开机等待联网时显示自定义 Logo
+  TJpgDec.drawJpg(70, 12, boot_logo_bubu, sizeof(boot_logo_bubu));
+
   clk.setColorDepth(8);
   
   clk.createSprite(200, 100);//创建窗口
