@@ -27,6 +27,9 @@
  *                    1) 开机Logo改为客户横标图（保持比例并居中显示，避免遮挡进度条）。
  *                    2) 配置提示文案改为中文图片渲染，解决字库缺字显示方框问题。
  *                    3) 运行画面右下角图片改为“竖标-1-1.jpg”。
+ *            V1.4.3  2026.04.10
+ *                    1) 配置提示区域新增本机IP访问地址（http://192.168.x.x）。
+ *                    2) 明确提示“sd3.local”与“本机IP地址”均可登录配置页。
  * 
  * 引 脚 分 配： SCK  GPIO14
  *             MOSI  GPIO13
@@ -38,7 +41,7 @@
  * 
  *    感谢群友 @你别失望  提醒发现WiFi保存后无法重置的问题，目前已解决。详情查看更改说明！
  * *****************************************************************/
-#define Version  "SDD V1.4.2-BUBU"
+#define Version  "LIAN LI-V1.4.3"
 /* *****************************************************************
  *  库文件、头文件
  * *****************************************************************/
@@ -708,23 +711,19 @@ void Web_Sever()
 //web服务打开后LCD显示登陆网址及IP
 void Web_sever_Win()
 {
-  IPAddress IP_adr = WiFi.localIP();
-  // strcpy(IP_adr,WiFi.localIP().toString());
+  String ip_url = "http://" + WiFi.localIP().toString();
   clk.setColorDepth(8);
   
-  clk.createSprite(200, 70);//创建窗口
+  clk.createSprite(220, 92);//创建窗口
   clk.fillSprite(0x0000);   //填充率
 
-  // clk.drawRoundRect(0,0,200,100,5,0xFFFF);       //空心圆角矩形
   clk.setTextDatum(CC_DATUM);   //设置文本数据
-  clk.setTextColor(TFT_GREEN, 0x0000); 
-  // clk.drawString("IP:",45,60,2);
   clk.setTextColor(TFT_WHITE, 0x0000); 
-  clk.drawString("http://sd3.local",100,44,4);
-  // clk.drawString(&IP_adr,125,70,2);
-  clk.pushSprite(20,40);  //窗口位置
-  // 中文提示使用图片资源，避免字库缺字显示方框
-  TJpgDec.drawJpg(40, 44, config_tip_cn, sizeof(config_tip_cn));
+  clk.drawString("http://sd3.local",110,44,4);
+  clk.drawString(ip_url,110,72,2);
+  clk.pushSprite(10,30);  //窗口位置
+  // 中文提示使用图片资源，避免字库缺字显示方框（以下地址均可登录）
+  TJpgDec.drawJpg(20, 32, config_tip_cn, sizeof(config_tip_cn));
     
   clk.deleteSprite();
 }
