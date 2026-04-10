@@ -23,6 +23,10 @@
  *                    2) 正常运行画面右下角区域改为布布头像。
  *                    3) 去掉运行画面右下角上方“内温”文字。
  *                    4) 修复运行画面头像每1-2秒闪动的问题（仅在整屏刷新时重绘头像）。
+ *            V1.4.2  2026.04.10
+ *                    1) 开机Logo改为客户横标图（保持比例并居中显示，避免遮挡进度条）。
+ *                    2) 配置提示文案改为中文图片渲染，解决字库缺字显示方框问题。
+ *                    3) 运行画面右下角图片改为“竖标-1-1.jpg”。
  * 
  * 引 脚 分 配： SCK  GPIO14
  *             MOSI  GPIO13
@@ -34,7 +38,7 @@
  * 
  *    感谢群友 @你别失望  提醒发现WiFi保存后无法重置的问题，目前已解决。详情查看更改说明！
  * *****************************************************************/
-#define Version  "SDD V1.4.1-BUBU"
+#define Version  "SDD V1.4.2-BUBU"
 /* *****************************************************************
  *  库文件、头文件
  * *****************************************************************/
@@ -95,6 +99,7 @@ DHT dht(DHTPIN,DHTTYPE);
  * *****************************************************************/
 #include "font/ZdyLwFont_20.h"
 #include "img/boot_logo_bubu.h"
+#include "img/config_tip_cn.h"
 #include "img/indoor_bubu.h"
 #include "img/temperature.h"
 #include "img/humidity.h"
@@ -291,7 +296,8 @@ byte loadNum = 6;
 void loading(byte delayTime)//绘制进度条
 {
   // 开机等待联网时显示自定义 Logo
-  TJpgDec.drawJpg(70, 12, boot_logo_bubu, sizeof(boot_logo_bubu));
+  // 开机Logo：保持图片比例后进行水平居中显示
+  TJpgDec.drawJpg(20, 44, boot_logo_bubu, sizeof(boot_logo_bubu));
 
   clk.setColorDepth(8);
   
@@ -712,12 +718,13 @@ void Web_sever_Win()
   // clk.drawRoundRect(0,0,200,100,5,0xFFFF);       //空心圆角矩形
   clk.setTextDatum(CC_DATUM);   //设置文本数据
   clk.setTextColor(TFT_GREEN, 0x0000); 
-  clk.drawString("Connect to Config:",70,10,2);
   // clk.drawString("IP:",45,60,2);
   clk.setTextColor(TFT_WHITE, 0x0000); 
-  clk.drawString("http://sd3.local",100,40,4);
+  clk.drawString("http://sd3.local",100,44,4);
   // clk.drawString(&IP_adr,125,70,2);
   clk.pushSprite(20,40);  //窗口位置
+  // 中文提示使用图片资源，避免字库缺字显示方框
+  TJpgDec.drawJpg(40, 44, config_tip_cn, sizeof(config_tip_cn));
     
   clk.deleteSprite();
 }
