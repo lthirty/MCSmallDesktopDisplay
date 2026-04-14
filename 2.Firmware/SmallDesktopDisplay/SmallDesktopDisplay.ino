@@ -82,6 +82,31 @@
  *                    1) Web图片上传新增PNG支持（手机可直接选PNG）。
  *                    2) 前端自动将PNG/JPG统一转为JPG后上传，保持设备端解码稳定。
  *                    3) 上传提示文案与后端扩展校验同步更新为JPG/JPEG/PNG。
+ *            V1.6.31  2026.04.14
+ *                    1) 开机Logo显示宽度收敛为进度条宽度的90%（200->180），并保持居中显示。
+ *                    2) 自定义开机图 /boot.jpg 绘制框同步为180x70，避免“看起来没变宽度”的问题。
+ *                    3) Web端开机图上传预处理同步为200画布内180宽等比居中。
+ *            V1.6.32  2026.04.14
+ *                    1) 去掉运行页面右下角图片下方的IP显示内容。
+ *                    2) 运行页面右下角图片整体下移5像素（Y:157->162）。
+ *            V1.6.33  2026.04.14
+ *                    1) 运行页面右下角图片尺寸增大5像素（60x60 -> 65x65）。
+ *                    2) 运行页面右下角图片再次下移5像素（Y:162 -> 167）。
+ *            V1.6.34  2026.04.14
+ *                    1) 运行页面右下角图片尺寸继续增大5像素（65x65 -> 70x70）。
+ *                    2) 运行页面右下角图片继续下移5像素（Y:167 -> 172）。
+ *            V1.6.35  2026.04.14
+ *                    1) 运行页面右下角图片尺寸继续增大5像素（70x70 -> 75x75）。
+ *                    2) 运行页面右下角图片上移5像素（Y:172 -> 167）。
+ *                    3) 运行页面右下角图片左移5像素（X:170 -> 165）。
+ *            V1.6.36  2026.04.14
+ *                    1) 运行页面右下角图片尺寸继续增大5像素（75x75 -> 80x80）。
+ *                    2) 运行页面右下角图片继续上移5像素（Y:167 -> 162）。
+ *            V1.6.37  2026.04.14
+ *                    1) 运行页面右下角图片尺寸继续增大5像素（80x80 -> 85x85）。
+ *                    2) Web端运行图上传预处理同步为85x85，确保更换图片按最新尺寸生效。
+ *            V1.6.38  2026.04.14
+ *                    1) 运行页面右下角图片左移5像素（X:165 -> 160）。
  * 引 脚 分 配： SCK  GPIO14
  *             MOSI  GPIO13
  *             RES   GPIO2
@@ -92,7 +117,7 @@
  * 
  *    感谢群友 @你别失望  提醒发现WiFi保存后无法重置的问题，目前已解决。详情查看更改说明！
  * *****************************************************************/
-#define Version  "MuchCode-V1.6.30"
+#define Version  "MuchCode-V1.6.38"
 /* *****************************************************************
  *  库文件、头文件
  * *****************************************************************/
@@ -402,7 +427,7 @@ bool drawCustomJpegInBox(const char* path, int x, int y, int boxW, int boxH)
   if(sizeJr == JDR_OK && w > 0 && h > 0)
   {
     int scale = 1;
-    while(scale < 8 && ((int)(w / (scale * 2)) > boxW || (int)(h / (scale * 2)) > boxH)) scale *= 2;
+    while(scale < 8 && ((int)(w / scale) > boxW || (int)(h / scale) > boxH)) scale *= 2;
     int drawW = (int)(w / scale);
     int drawH = (int)(h / scale);
     int drawX = x + (boxW - drawW) / 2;
@@ -463,20 +488,30 @@ bool validateUploadedJpeg(const char* path, String& err)
   Serial.printf("JPEG校验成功: %s, %ux%u\r\n", path, w, h);
   return true;
 }
+const int BOOT_LOGO_X = 20;
+const int BOOT_LOGO_Y = 44;
+const int BOOT_LOGO_W = 200;
+const int BOOT_LOGO_H = 70;
+const int BOOT_LOGO_CONTENT_W = (BOOT_LOGO_W * 9) / 10; // 90%
+const int BOOT_LOGO_CONTENT_X = BOOT_LOGO_X + (BOOT_LOGO_W - BOOT_LOGO_CONTENT_W) / 2;
+const int BOOT_PROGRESS_X = 20;
+const int BOOT_PROGRESS_Y = 120;
+const int BOOT_PROGRESS_W = 200;
+
 //绘制开机Logo
 void drawBootLogo()
 {
   switch (Boot_Logo_Flag)
   {
     case 2:
-      if(!drawCustomJpegInBox("/boot.jpg", 20, 44, 200, 70))
-        TJpgDec.drawJpg(20, 44, boot_logo_bubu, sizeof(boot_logo_bubu));
+      if(!drawCustomJpegInBox("/boot.jpg", BOOT_LOGO_CONTENT_X, BOOT_LOGO_Y, BOOT_LOGO_CONTENT_W, BOOT_LOGO_H))
+        TJpgDec.drawJpg(BOOT_LOGO_X, BOOT_LOGO_Y, boot_logo_bubu, sizeof(boot_logo_bubu));
       break;
     case 1:
-      TJpgDec.drawJpg(20, 44, misaka, sizeof(misaka));
+      TJpgDec.drawJpg(BOOT_LOGO_X, BOOT_LOGO_Y, misaka, sizeof(misaka));
       break;
     default:
-      TJpgDec.drawJpg(20, 44, boot_logo_bubu, sizeof(boot_logo_bubu));
+      TJpgDec.drawJpg(BOOT_LOGO_X, BOOT_LOGO_Y, boot_logo_bubu, sizeof(boot_logo_bubu));
       break;
   }
 }
@@ -502,11 +537,11 @@ void loading(byte delayTime)//绘制进度条
   if(!bootLogoDrawn){ drawBootLogo(); bootLogoDrawn = 1; }
 
   clk.setColorDepth(8);
-  clk.createSprite(200, 20);
+  clk.createSprite(BOOT_PROGRESS_W, 20);
   clk.fillSprite(0x0000);
-  clk.drawRoundRect(0,0,200,16,8,0xFFFF);
+  clk.drawRoundRect(0,0,BOOT_PROGRESS_W,16,8,0xFFFF);
   clk.fillRoundRect(3,3,loadNum,10,5,0xFFFF);
-  clk.pushSprite(20,120);
+  clk.pushSprite(BOOT_PROGRESS_X,BOOT_PROGRESS_Y);
   clk.deleteSprite();
 
   drawBottomConnectHint();
@@ -544,16 +579,16 @@ void tempWin()
 
 void drawRuntimeCornerImage()
 {
-  const int clearX = 170;
+  const int clearX = 160;
   const int clearY = 157;
-  const int clearW = 60;
-  const int clearH = 60;
+  const int clearW = 85;
+  const int clearH = 95;
 
-  // 目标图固定为60x60像素，并锚定在右下角，避免遮挡其它信息。
-  const int imgW = 60;
-  const int imgH = 60;
-  const int imgX = 170;
-  const int imgY = 157;
+  // 目标图固定为85x85像素，并锚定在右下角，避免遮挡其它信息。
+  const int imgW = 85;
+  const int imgH = 85;
+  const int imgX = 160;
+  const int imgY = 162;
 
   // 清除历史区域，避免旧图残留。
   tft.fillRect(clearX, clearY, clearW, clearH, bgColor);
@@ -955,10 +990,10 @@ void handleconfig()
   content += "<fieldset><legend>图片上传（手机相册）</legend>";
   content += "<form id='bootUploadForm' action='upload_boot' method='POST' enctype='multipart/form-data'><label>上传开机Logo（JPG/JPEG/PNG）</label><input type='file' name='boot_file' accept='image/*,.jpg,.jpeg,.png'><input class='btn' type='submit' value='上传并设为开机图'></form><div id='boot_upload_status' class='ver'>" + bootUploadStatusText + "</div><progress id='boot_upload_progress' max='100' value='" + bootUploadProgressVal + "' style='width:100%;height:14px;'></progress>";
   content += "<form id='runUploadForm' action='upload_run' method='POST' enctype='multipart/form-data'><label>上传运行页右下角图（JPG/JPEG/PNG）</label><input type='file' name='run_file' accept='image/*,.jpg,.jpeg,.png'><input class='btn' type='submit' value='上传并设为运行页图'></form><div id='run_upload_status' class='ver'>" + runUploadStatusText + "</div><progress id='run_upload_progress' max='100' value='" + runUploadProgressVal + "' style='width:100%;height:14px;'></progress>";
-  content += "<div class='ver'>上传要求：支持JPG/JPEG/PNG（PNG会自动转JPG）；请先在手机端压缩后再上传。建议≤800KB，最大900KB；分辨率建议开机图≤1200x420；运行页图片会在网页端自动缩放为完整60x60后上传。</div>";
+  content += "<div class='ver'>上传要求：支持JPG/JPEG/PNG（PNG会自动转JPG）；请先在手机端压缩后再上传。建议≤800KB，最大900KB；分辨率建议开机图≤1200x420；运行页图片会在网页端自动缩放为完整85x85后上传。</div>";
   if(webUploadError.length() > 0) content += "<div style='color:#fda4af;font-size:12px;'>" + webUploadError + "</div>";
   content += "</fieldset>";
-  content += "<script>function loadImageFromFile(file){return new Promise(function(resolve,reject){var r=new FileReader();r.onload=function(){var img=new Image();img.onload=function(){resolve(img);};img.onerror=function(){reject(new Error('图片读取失败'));};img.src=r.result;};r.onerror=function(){reject(new Error('文件读取失败'));};r.readAsDataURL(file);});}function canvasToBlob(canvas,quality){return new Promise(function(resolve,reject){canvas.toBlob(function(blob){if(blob)resolve(blob);else reject(new Error('图片转换失败'));},'image/jpeg',quality||0.9);});}async function preprocessBootImage(file,statusEl){if(statusEl)statusEl.textContent='阶段：开机图转JPG处理中';var img=await loadImageFromFile(file);var cvs=document.createElement('canvas');cvs.width=Math.max(1,img.width);cvs.height=Math.max(1,img.height);var ctx=cvs.getContext('2d');ctx.fillStyle='#000';ctx.fillRect(0,0,cvs.width,cvs.height);ctx.drawImage(img,0,0,cvs.width,cvs.height);var blob=await canvasToBlob(cvs,0.9);return new File([blob],'boot_upload.jpg',{type:'image/jpeg'});}async function preprocessRunImage(file,statusEl){if(statusEl)statusEl.textContent='阶段：图片缩放60x60处理中';var img=await loadImageFromFile(file);var cvs=document.createElement('canvas');cvs.width=60;cvs.height=60;var ctx=cvs.getContext('2d');ctx.fillStyle='#000';ctx.fillRect(0,0,60,60);var ratio=Math.min(60/img.width,60/img.height);var dw=Math.max(1,Math.round(img.width*ratio));var dh=Math.max(1,Math.round(img.height*ratio));var dx=Math.floor((60-dw)/2);var dy=Math.floor((60-dh)/2);ctx.drawImage(img,dx,dy,dw,dh);var blob=await canvasToBlob(cvs,0.9);return new File([blob],'run_60x60.jpg',{type:'image/jpeg'});}function bindUpload(formId,statusId,progressId){var f=document.getElementById(formId);if(!f)return;f.addEventListener('submit',async function(e){e.preventDefault();var s=document.getElementById(statusId);var p=document.getElementById(progressId);var fi=f.querySelector('input[type=file]');var files=(fi||{}).files;if(!files||files.length===0){if(s)s.textContent='阶段：请选择图片';return;}var file=files[0];var maxBytes=900*1024;var name=(file.name||'').toLowerCase();if(!(name.endsWith('.jpg')||name.endsWith('.jpeg')||name.endsWith('.png'))){if(s)s.textContent='阶段：失败 - 仅支持JPG/JPEG/PNG';return;}if(file.size>maxBytes){if(s)s.textContent='阶段：失败 - 图片过大，请先压缩到900KB以内';return;}if(s)s.textContent='阶段：上传中 0%';if(p)p.value=0;var uploadFile=file;try{if(formId==='runUploadForm'){uploadFile=await preprocessRunImage(file,s);}else if(formId==='bootUploadForm'){uploadFile=await preprocessBootImage(file,s);}}catch(ex){if(s)s.textContent='阶段：失败 - '+((ex&&ex.message)?ex.message:'运行图预处理失败');return;}var xhr=new XMLHttpRequest();xhr.open('POST',f.action,true);xhr.upload.onprogress=function(ev){if(ev.lengthComputable){var v=Math.min(100,Math.round(ev.loaded*100/ev.total));if(p)p.value=v;if(s)s.textContent='阶段：上传中 '+v+'%';}};xhr.onreadystatechange=function(){if(xhr.readyState===4){if(xhr.status===200){if(s)s.textContent='阶段：上传完成';if(p)p.value=100;setTimeout(function(){if(s)s.textContent='阶段：改模处理中';},250);setTimeout(function(){if(s)s.textContent='阶段：适配处理中';},700);setTimeout(function(){if(s)s.textContent='阶段：上传和配置成功';},1150);setTimeout(function(){if(formId==='bootUploadForm'){location.href='/?boot_upload_ok=1';}else{location.href='/?run_upload_ok=1';}},1450);}else{if(s)s.textContent='阶段：失败 - '+(xhr.responseText||'上传异常');}}};var fd=new FormData();var field=(formId==='bootUploadForm')?'boot_file':'run_file';fd.append(field,uploadFile,uploadFile.name||'upload.jpg');xhr.send(fd);});}bindUpload('bootUploadForm','boot_upload_status','boot_upload_progress');bindUpload('runUploadForm','run_upload_status','run_upload_progress');</script><br>" + msg + "</div></body></html>";
+  content += "<script>function loadImageFromFile(file){return new Promise(function(resolve,reject){var r=new FileReader();r.onload=function(){var img=new Image();img.onload=function(){resolve(img);};img.onerror=function(){reject(new Error('图片读取失败'));};img.src=r.result;};r.onerror=function(){reject(new Error('文件读取失败'));};r.readAsDataURL(file);});}function canvasToBlob(canvas,quality){return new Promise(function(resolve,reject){canvas.toBlob(function(blob){if(blob)resolve(blob);else reject(new Error('图片转换失败'));},'image/jpeg',quality||0.9);});}async function preprocessBootImage(file,statusEl){if(statusEl)statusEl.textContent='阶段：图片缩放180x70处理中';var img=await loadImageFromFile(file);var cvs=document.createElement('canvas');cvs.width=200;cvs.height=70;var ctx=cvs.getContext('2d');ctx.fillStyle='#000';ctx.fillRect(0,0,200,70);var targetW=180;var targetH=70;var ratio=Math.min(targetW/img.width,targetH/img.height);var dw=Math.max(1,Math.round(img.width*ratio));var dh=Math.max(1,Math.round(img.height*ratio));var dx=Math.floor((200-dw)/2);var dy=Math.floor((70-dh)/2);ctx.drawImage(img,dx,dy,dw,dh);var blob=await canvasToBlob(cvs,0.9);return new File([blob],'boot_200x70.jpg',{type:'image/jpeg'});}async function preprocessRunImage(file,statusEl){if(statusEl)statusEl.textContent='阶段：图片缩放85x85处理中';var img=await loadImageFromFile(file);var cvs=document.createElement('canvas');cvs.width=85;cvs.height=85;var ctx=cvs.getContext('2d');ctx.fillStyle='#000';ctx.fillRect(0,0,85,85);var ratio=Math.min(85/img.width,85/img.height);var dw=Math.max(1,Math.round(img.width*ratio));var dh=Math.max(1,Math.round(img.height*ratio));var dx=Math.floor((85-dw)/2);var dy=Math.floor((85-dh)/2);ctx.drawImage(img,dx,dy,dw,dh);var blob=await canvasToBlob(cvs,0.9);return new File([blob],'run_85x85.jpg',{type:'image/jpeg'});}function bindUpload(formId,statusId,progressId){var f=document.getElementById(formId);if(!f)return;f.addEventListener('submit',async function(e){e.preventDefault();var s=document.getElementById(statusId);var p=document.getElementById(progressId);var fi=f.querySelector('input[type=file]');var files=(fi||{}).files;if(!files||files.length===0){if(s)s.textContent='阶段：请选择图片';return;}var file=files[0];var maxBytes=900*1024;var name=(file.name||'').toLowerCase();if(!(name.endsWith('.jpg')||name.endsWith('.jpeg')||name.endsWith('.png'))){if(s)s.textContent='阶段：失败 - 仅支持JPG/JPEG/PNG';return;}if(file.size>maxBytes){if(s)s.textContent='阶段：失败 - 图片过大，请先压缩到900KB以内';return;}if(s)s.textContent='阶段：上传中 0%';if(p)p.value=0;var uploadFile=file;try{if(formId==='runUploadForm'){uploadFile=await preprocessRunImage(file,s);}else if(formId==='bootUploadForm'){uploadFile=await preprocessBootImage(file,s);}}catch(ex){if(s)s.textContent='阶段：失败 - '+((ex&&ex.message)?ex.message:'运行图预处理失败');return;}var xhr=new XMLHttpRequest();xhr.open('POST',f.action,true);xhr.upload.onprogress=function(ev){if(ev.lengthComputable){var v=Math.min(100,Math.round(ev.loaded*100/ev.total));if(p)p.value=v;if(s)s.textContent='阶段：上传中 '+v+'%';}};xhr.onreadystatechange=function(){if(xhr.readyState===4){if(xhr.status===200){if(s)s.textContent='阶段：上传完成';if(p)p.value=100;setTimeout(function(){if(s)s.textContent='阶段：改模处理中';},250);setTimeout(function(){if(s)s.textContent='阶段：适配处理中';},700);setTimeout(function(){if(s)s.textContent='阶段：上传和配置成功';},1150);setTimeout(function(){if(formId==='bootUploadForm'){location.href='/?boot_upload_ok=1';}else{location.href='/?run_upload_ok=1';}},1450);}else{if(s)s.textContent='阶段：失败 - '+(xhr.responseText||'上传异常');}}};var fd=new FormData();var field=(formId==='bootUploadForm')?'boot_file':'run_file';fd.append(field,uploadFile,uploadFile.name||'upload.jpg');xhr.send(fd);});}bindUpload('bootUploadForm','boot_upload_status','boot_upload_progress');bindUpload('runUploadForm','run_upload_status','run_upload_progress');</script><br>" + msg + "</div></body></html>";
   server.send(200, "text/html", content);
 }
 
@@ -1193,20 +1228,22 @@ void Webconfig()
   const char* p_basic_title = "<div style='margin:8px 0 4px 0;padding:6px;background:#0f172a;color:#fff;border-radius:4px;'><b>基础设置</b></div>";
   WiFiManagerParameter custom_basic_title(p_basic_title);
 
-  const char* city_select = "<label for='CityPreset'>城市快速选择</label>\
-                              <select id='CityPreset' onchange=\"var t=document.getElementById('CityCode');if(t&&this.value){t.value=this.value;}\">\
-                              <option value=''>请选择城市</option>\
-                              <option value='101010100'>北京</option><option value='101020100'>上海</option><option value='101280101'>广州</option><option value='101280601'>深圳</option>\
-                              <option value='101210101'>杭州</option><option value='101190101'>南京</option><option value='101200101'>武汉</option><option value='101110101'>西安</option>\
-                              <option value='101040100'>重庆</option><option value='101270101'>成都</option><option value='101250101'>长沙</option><option value='101280701'>珠海</option>\
-                              </select>";
+  const char* city_select =
+      "<label for='CityPreset'>城市快速选择</label>"
+      "<select id='CityPreset' onchange=\"var t=document.getElementById('CityCode');if(t&&this.value){t.value=this.value;}\">"
+      "<option value=''>请选择城市</option>"
+      "<option value='101010100'>北京</option><option value='101020100'>上海</option><option value='101280101'>广州</option><option value='101280601'>深圳</option>"
+      "<option value='101210101'>杭州</option><option value='101190101'>南京</option><option value='101200101'>武汉</option><option value='101110101'>西安</option>"
+      "<option value='101040100'>重庆</option><option value='101270101'>成都</option><option value='101250101'>长沙</option><option value='101280701'>珠海</option>"
+      "</select>";
   WiFiManagerParameter custom_city_select(city_select);
 
-  const char* set_rotation = "<br/><label for='set_rotation'>屏幕方向</label>\
-                              <input type='radio' name='set_rotation' value='0' checked> USB朝下<br>\
-                              <input type='radio' name='set_rotation' value='1'> USB朝右<br>\
-                              <input type='radio' name='set_rotation' value='2'> USB朝上<br>\
-                              <input type='radio' name='set_rotation' value='3'> USB朝左<br>";
+  const char* set_rotation =
+      "<br/><label for='set_rotation'>屏幕方向</label>"
+      "<input type='radio' name='set_rotation' value='0' checked> USB朝下<br>"
+      "<input type='radio' name='set_rotation' value='1'> USB朝右<br>"
+      "<input type='radio' name='set_rotation' value='2'> USB朝上<br>"
+      "<input type='radio' name='set_rotation' value='3'> USB朝左<br>";
   WiFiManagerParameter  custom_rot(set_rotation); // custom html input
   WiFiManagerParameter  custom_bl("LCDBL","屏幕亮度(1-100)","10",3);
   #if DHT_EN
@@ -2053,7 +2090,7 @@ void digitalClockDisplay(int reflash_en)
   clk.deleteSprite();
   
   clk.unloadFont();
-  drawRuntimeIpTag();
+  // 已按需求移除运行页右下角IP显示
   /***日期****/
 }
 
@@ -2133,6 +2170,12 @@ void sendNTPpacket(IPAddress &address)
   Udp.write(packetBuffer, NTP_PACKET_SIZE);
   Udp.endPacket();
 }
+
+
+
+
+
+
 
 
 
