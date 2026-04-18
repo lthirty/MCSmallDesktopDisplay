@@ -26,7 +26,7 @@ def _read_version(project_dir: str) -> str:
 def _copy_bin(target, source, env):
     project_dir = env.subst("$PROJECT_DIR")
     version = _read_version(project_dir)
-    out_dir = os.path.join(project_dir, "bin文件-封装好的代码")
+    out_dir = os.path.join(project_dir, "02.bin文件-封装好的代码")
     os.makedirs(out_dir, exist_ok=True)
 
     src_bin = str(target[0])
