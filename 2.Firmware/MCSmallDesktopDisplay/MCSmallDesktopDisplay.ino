@@ -54,6 +54,8 @@
  *                    6) 右下角图标位置上移（RUN_IMG_Y=175）。
  *                    7) 默认城市改为北京（101010100）。
  *                    8) Web端城市切换改为异步模式，避免在HTTP请求中发起天气查询导致内存不足重启。
+ *            V1.5.2  2026.04.18
+ *                    1) 关闭WiFiManager的Captive Portal重定向，解决内嵌浏览器中Configure WiFi按钮无响应的问题。
  * 
  * 引 脚 分 配： SCK  GPIO14
  *             MOSI  GPIO13
@@ -65,7 +67,7 @@
  * 
  *    感谢群友 @你别失望  提醒发现WiFi保存后无法重置的问题，目前已解决。详情查看更改说明！
  * *****************************************************************/
-#define Version  "V1.5.1"
+#define Version  "V1.5.2"
 /* *****************************************************************
  *  库文件、头文件
  * *****************************************************************/
@@ -1073,7 +1075,7 @@ void Webconfig()
 
   // wm.setConnectTimeout(20); // how long to try to connect for before continuing
 //  wm.setConfigPortalTimeout(30); // auto close configportal after n seconds
-  // wm.setCaptivePortalEnable(false); // disable captive portal redirection
+  wm.setCaptivePortalEnable(false); // disable captive portal redirection
   // wm.setAPClientCheck(true); // avoid timeout if client connected to softap
 
   // wifi scan settings
