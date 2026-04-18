@@ -7,7 +7,7 @@
  * 修      改：微车游
  * 讨  论  群：811058758、887171863
  * 创 建 日 期：2021.07.19
- * 最后更改日期：2026.04.17
+ * 最后更改日期：2026.04.18
  * 更 改 说 明：V1.1添加串口调试，波特率115200\8\n\1；增加版本号显示。
  *            V1.2亮度和城市代码保存到EEPROM，断电可保存
  *            V1.3.1 更改smartconfig改为WEB配网模式，同时在配网的同时增加亮度、屏幕方向设置。
@@ -42,6 +42,9 @@
  *            V1.4.9  2026.04.17
  *                    1) 修复Web管理页所有文字不显示的问题（Version变量未正确嵌入JS导致脚本崩溃）。
  *                    2) 修复Web管理页按钮文字不显示的问题（input元素需设置value而非textContent）。
+ *            V1.5.0  2026.04.18
+ *                    1) WiFi配网界面字体从font2(16px)放大到font4(26px)，提升可读性。
+ *                    2) 编译后自动备份bin文件和项目压缩包到01.Backup目录。
  * 
  * 引 脚 分 配： SCK  GPIO14
  *             MOSI  GPIO13
@@ -53,7 +56,7 @@
  * 
  *    感谢群友 @你别失望  提醒发现WiFi保存后无法重置的问题，目前已解决。详情查看更改说明！
  * *****************************************************************/
-#define Version  "V1.4.9"
+#define Version  "V1.5.0"
 /* *****************************************************************
  *  库文件、头文件
  * *****************************************************************/
@@ -421,8 +424,8 @@ bool validateUploadedJpeg(const char* path, String& err)
 
 void drawBootLogo()
 {
-  if(!drawCustomJpegInBox("/boot.jpg", 20, 44, 200, 70))
-    TJpgDec.drawJpg(20, 44, boot_logo_bubu, sizeof(boot_logo_bubu));
+  if(!drawCustomJpegInBox("/boot.jpg", 20, 64, 200, 70))
+    TJpgDec.drawJpg(20, 64, boot_logo_bubu, sizeof(boot_logo_bubu));
 }
 
 void drawRuntimeCornerImage()
@@ -443,16 +446,16 @@ void loading(byte delayTime)//绘制进度条
 
   clk.setColorDepth(8);
   
-  clk.createSprite(200, 100);//创建窗口
+  clk.createSprite(220, 70);//创建窗口
   clk.fillSprite(0x0000);   //填充率
 
-  clk.drawRoundRect(0,0,200,16,8,0xFFFF);       //空心圆角矩形
+  clk.drawRoundRect(0,0,220,16,8,0xFFFF);       //空心圆角矩形
   clk.fillRoundRect(3,3,loadNum,10,5,0xFFFF);   //实心圆角矩形
   clk.setTextDatum(CC_DATUM);   //设置文本数据
   clk.setTextColor(TFT_GREEN, 0x0000); 
-  clk.drawString("Connecting to WiFi......",100,40,2);
+  clk.drawString("Connecting WiFi...",110,44,4);
   clk.setTextColor(TFT_WHITE, 0x0000); 
-  clk.pushSprite(20,120);  //窗口位置
+  clk.pushSprite(10,150);  //窗口位置
   
   //clk.setTextDatum(CC_DATUM);
   //clk.setTextColor(TFT_WHITE, 0x0000); 
@@ -957,18 +960,19 @@ void Web_Sever()
 //web服务打开后LCD显示登陆网址及IP
 void Web_sever_Win()
 {
-  String ip_url = "http://" + WiFi.localIP().toString();
+  String ip_url = WiFi.localIP().toString();
   clk.setColorDepth(8);
   
   clk.createSprite(220, 92);//创建窗口
   clk.fillSprite(0x0000);   //填充率
 
-  clk.setTextDatum(CC_DATUM);   //设置文本数据
+  clk.setTextDatum(CC_DATUM);
+  clk.setTextColor(TFT_GREEN, 0x0000);
+  clk.drawString("Service IP:",110,16,4);
+
   clk.setTextColor(TFT_WHITE, 0x0000); 
-  clk.drawString(ip_url,110,58,2);
+  clk.drawString(ip_url,110,58,4);
   clk.pushSprite(10,30);  //窗口位置
-  // 中文提示使用图片资源，避免字库缺字显示方框（以下地址均可登录）
-  TJpgDec.drawJpg(20, 32, config_tip_cn, sizeof(config_tip_cn));
     
   clk.deleteSprite();
 }
@@ -980,16 +984,16 @@ void Web_win()
 {
   clk.setColorDepth(8);
   
-  clk.createSprite(200, 60);//创建窗口
+  clk.createSprite(220, 110);//创建窗口
   clk.fillSprite(0x0000);   //填充率
 
   clk.setTextDatum(CC_DATUM);   //设置文本数据
   clk.setTextColor(TFT_GREEN, 0x0000); 
-  clk.drawString("WiFi Connect Fail!",100,10,2);
-  clk.drawString("SSID:",45,40,2);
+  clk.drawString("Pls Connect WiFi",110,16,4);
+  clk.drawString("SSID:",110,52,4);
   clk.setTextColor(TFT_WHITE, 0x0000); 
-  clk.drawString("AutoConnectAP",125,40,2);
-  clk.pushSprite(20,50);  //窗口位置
+  clk.drawString("AutoConnectAP",110,86,4);
+  clk.pushSprite(10,20);  //窗口位置
     
   clk.deleteSprite();
 }
