@@ -56,6 +56,9 @@
  *                    8) Web端城市切换改为异步模式，避免在HTTP请求中发起天气查询导致内存不足重启。
  *            V1.5.2  2026.04.18
  *                    1) 关闭WiFiManager的Captive Portal重定向，解决内嵌浏览器中Configure WiFi按钮无响应的问题。
+ *            V1.5.3  2026.04.18
+ *                    1) 恢复Captive Portal自动跳转，改为启用APClientCheck防止超时退出。
+ *                    2) 设置配网超时5分钟，菜单增加param选项。
  * 
  * 引 脚 分 配： SCK  GPIO14
  *             MOSI  GPIO13
@@ -67,7 +70,7 @@
  * 
  *    感谢群友 @你别失望  提醒发现WiFi保存后无法重置的问题，目前已解决。详情查看更改说明！
  * *****************************************************************/
-#define Version  "V1.5.2"
+#define Version  "V1.5.3"
 /* *****************************************************************
  *  库文件、头文件
  * *****************************************************************/
@@ -1062,7 +1065,7 @@ void Webconfig()
   // menu tokens, "wifi","wifinoscan","info","param","close","sep","erase","restart","exit" (sep is seperator) (if param is in menu, params will not show up in wifi page!)
   // const char* menu[] = {"wifi","info","param","sep","restart","exit"}; 
   // wm.setMenu(menu,6);
-  std::vector<const char *> menu = {"wifi","restart"};
+  std::vector<const char *> menu = {"wifi","param","restart"};
   wm.setMenu(menu);
   
   // set dark theme
@@ -1074,9 +1077,9 @@ void Webconfig()
   // wm.setShowDnsFields(true);    // force show dns field always
 
   // wm.setConnectTimeout(20); // how long to try to connect for before continuing
-//  wm.setConfigPortalTimeout(30); // auto close configportal after n seconds
-  wm.setCaptivePortalEnable(false); // disable captive portal redirection
-  // wm.setAPClientCheck(true); // avoid timeout if client connected to softap
+  wm.setConfigPortalTimeout(300); // auto close configportal after 5 minutes
+  // wm.setCaptivePortalEnable(false); // disable captive portal redirection
+  wm.setAPClientCheck(true); // avoid timeout if client connected to softap
 
   // wifi scan settings
   // wm.setRemoveDuplicateAPs(false); // do not remove duplicate ap names (true)
