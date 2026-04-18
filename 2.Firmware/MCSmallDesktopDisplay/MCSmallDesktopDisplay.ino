@@ -45,6 +45,15 @@
  *            V1.5.0  2026.04.18
  *                    1) WiFi配网界面字体从font2(16px)放大到font4(26px)，提升可读性。
  *                    2) 编译后自动备份bin文件和项目压缩包到01.Backup目录。
+ *            V1.5.1  2026.04.18
+ *                    1) WiFi配网界面改为三行显示：Pls Connect WiFi / SSID: / AutoConnectAP。
+ *                    2) 进度条和Connecting WiFi文字下移，避免与SSID文字重叠。
+ *                    3) 开机Logo下移至上半区居中位置。
+ *                    4) Service IP页面改用英文font4显示，去掉http://前缀，修复中文字库OOM崩溃。
+ *                    5) 默认Logo改为横标白.png，右下角图标改为竖标白-纯图片.png。
+ *                    6) 右下角图标位置上移（RUN_IMG_Y=175）。
+ *                    7) 默认城市改为北京（101010100）。
+ *                    8) Web端城市切换改为异步模式，避免在HTTP请求中发起天气查询导致内存不足重启。
  * 
  * 引 脚 分 配： SCK  GPIO14
  *             MOSI  GPIO13
@@ -56,7 +65,7 @@
  * 
  *    感谢群友 @你别失望  提醒发现WiFi保存后无法重置的问题，目前已解决。详情查看更改说明！
  * *****************************************************************/
-#define Version  "V1.5.0"
+#define Version  "V1.5.1"
 /* *****************************************************************
  *  库文件、头文件
  * *****************************************************************/
@@ -117,9 +126,9 @@ DHT dht(DHTPIN,DHTTYPE);
  *  字库、图片库
  * *****************************************************************/
 #include "font/ZdyLwFont_20.h"
-#include "img/boot_logo_bubu.h"
+#include "img/boot_logo_lianli.h"
 #include "img/config_tip_cn.h"
-#include "img/indoor_bubu.h"
+#include "img/indoor_lianli.h"
 #include "img/temperature.h"
 #include "img/humidity.h"
 
@@ -159,7 +168,7 @@ config_type wificonf ={{""},{""}};
 int updateweater_time = 10; //天气更新时间  X 分钟
 int LCD_Rotation = 0;   //LCD屏幕方向
 int LCD_BL_PWM = 8;//屏幕亮度0-100，默认50
-String cityCode = "101282005";  //天气城市代码 长沙:101282005株洲:101250301衡阳:101250401
+String cityCode = "101010100";  //天气城市代码 北京:101010100
 //----------------------------------------------------
 
 //LCD屏幕相关设置
@@ -168,7 +177,7 @@ TFT_eSprite clk = TFT_eSprite(&tft);
 #define LCD_BL_PIN 5    //LCD背光引脚
 uint16_t bgColor = 0x0000;
 const int RUN_IMG_X = 170;
-const int RUN_IMG_Y = 184;
+const int RUN_IMG_Y = 175;
 const int RUN_IMG_W = 60;
 const int RUN_IMG_H = 54;
 
@@ -425,7 +434,7 @@ bool validateUploadedJpeg(const char* path, String& err)
 void drawBootLogo()
 {
   if(!drawCustomJpegInBox("/boot.jpg", 20, 64, 200, 70))
-    TJpgDec.drawJpg(20, 64, boot_logo_bubu, sizeof(boot_logo_bubu));
+    TJpgDec.drawJpg(20, 64, boot_logo_lianli, sizeof(boot_logo_lianli));
 }
 
 void drawRuntimeCornerImage()
@@ -433,7 +442,7 @@ void drawRuntimeCornerImage()
   if(!drawCustomJpegInBox("/run.jpg", RUN_IMG_X, RUN_IMG_Y, RUN_IMG_W, RUN_IMG_H))
   {
     tft.fillRect(RUN_IMG_X, RUN_IMG_Y, RUN_IMG_W, RUN_IMG_H, bgColor);
-    TJpgDec.drawJpg(RUN_IMG_X, RUN_IMG_Y, indoor_bubu, sizeof(indoor_bubu));
+    TJpgDec.drawJpg(RUN_IMG_X, RUN_IMG_Y, indoor_lianli, sizeof(indoor_lianli));
   }
 }
 
@@ -723,8 +732,6 @@ void handleconfig()
       cityCode = web_cc;
       UpdateWeater_en = 1;
       weaterTime = 0;
-      getCityWeater();
-      LCD_reflash(1);
     }
     if(web_lcdbl>0 && web_lcdbl<=100)
     {
@@ -1029,7 +1036,7 @@ void Webconfig()
   WiFiManagerParameter  custom_DHT11_en("DHT11_en","Enable DHT11 sensor","0",1);
   #endif
   WiFiManagerParameter  custom_weatertime("WeaterUpdateTime","Weather Update Time(Min)","10",3);
-  WiFiManagerParameter  custom_cc("CityCode","CityCode","101282005",9);
+  WiFiManagerParameter  custom_cc("CityCode","CityCode","101010100",9);
   WiFiManagerParameter  p_lineBreak_notext("<p></p>");
 
   // wm.addParameter(&p_lineBreak_notext);
