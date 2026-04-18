@@ -59,6 +59,8 @@
  *            V1.5.3  2026.04.18
  *                    1) 恢复Captive Portal自动跳转，改为启用APClientCheck防止超时退出。
  *                    2) 设置配网超时5分钟，菜单增加param选项。
+ *            V1.5.4  2026.04.18
+ *                    1) WiFi配网界面改为四行提示：Connect WiFi / AutoConnectAP / Log to set WiFi / 192.168.4.1。
  * 
  * 引 脚 分 配： SCK  GPIO14
  *             MOSI  GPIO13
@@ -70,7 +72,7 @@
  * 
  *    感谢群友 @你别失望  提醒发现WiFi保存后无法重置的问题，目前已解决。详情查看更改说明！
  * *****************************************************************/
-#define Version  "V1.5.3"
+#define Version  "V1.5.4"
 /* *****************************************************************
  *  库文件、头文件
  * *****************************************************************/
@@ -996,16 +998,19 @@ void Web_win()
 {
   clk.setColorDepth(8);
   
-  clk.createSprite(220, 110);//创建窗口
+  clk.createSprite(220, 140);//创建窗口
   clk.fillSprite(0x0000);   //填充率
 
   clk.setTextDatum(CC_DATUM);   //设置文本数据
   clk.setTextColor(TFT_GREEN, 0x0000); 
-  clk.drawString("Pls Connect WiFi",110,16,4);
-  clk.drawString("SSID:",110,52,4);
+  clk.drawString("Connect WiFi:",110,14,4);
   clk.setTextColor(TFT_WHITE, 0x0000); 
-  clk.drawString("AutoConnectAP",110,86,4);
-  clk.pushSprite(10,20);  //窗口位置
+  clk.drawString("AutoConnectAP",110,48,4);
+  clk.setTextColor(TFT_GREEN, 0x0000); 
+  clk.drawString("Log to set WiFi:",110,82,4);
+  clk.setTextColor(TFT_WHITE, 0x0000); 
+  clk.drawString("192.168.4.1",110,116,4);
+  clk.pushSprite(10,10);  //窗口位置
     
   clk.deleteSprite();
 }
