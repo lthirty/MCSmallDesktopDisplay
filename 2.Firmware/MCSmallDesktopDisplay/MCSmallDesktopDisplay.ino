@@ -1054,6 +1054,15 @@ void Webconfig()
   
   // set dark theme
   wm.setClass("invert");
+  // 提升 WiFiManager 配网页可读性，放大登录页字体和控件尺寸
+  wm.setCustomHeadElement(
+    "<style>"
+    "html,body{font-size:22px!important;line-height:1.6!important;}"
+    "h1,h2,h3,legend,label,p,span,li,a{font-size:22px!important;}"
+    "input,select,button,textarea{font-size:22px!important;min-height:48px!important;}"
+    ".btn,button,input[type='submit']{font-size:24px!important;padding:12px 16px!important;}"
+    "</style>"
+  );
   
   //set static ip
   // wm.setSTAStaticIPConfig(IPAddress(10,0,1,99), IPAddress(10,0,1,1), IPAddress(255,255,255,0)); // set static ip,gw,sn
